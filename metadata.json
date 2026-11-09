@@ -1,0 +1,8 @@
+{
+  "name": "Mac Disk & DMG Manager for Windows",
+  "description": "Gestor profesional de discos Mac (HFS+, APFS) para Windows 11. Lee y formatea unidades Apple, crea USBs booteables con DMG y gestiona particiones eficientemente.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,35 @@
+==============================================================================
+  TRANSMAC 11 PARA WINDOWS 11 - EDICIÓN NATIVA DE ESCRITORIO
+==============================================================================
+
+Esta aplicación nativa resuelve la limitación de los navegadores web y permite:
+1. Detectar automáticamente TODOS los discos físicos y pendrives USB de tu PC.
+2. Leer las letras de unidad reales (D:, E:, F:, etc.) y capacidades en GB.
+3. Proteger tu disco C: de Windows contra borrados accidentales.
+4. Crear pendrives booteables de Mac OS X (Snow Leopard, Leopard, Lion...)
+   con esquema MBR y Partición Activa (0x80) compatible con el arranque por
+   la tecla 'Alt' (Option) de los MacBook 2006 a 2011.
+
+------------------------------------------------------------------------------
+CÓMO USAR LA APLICACIÓN:
+------------------------------------------------------------------------------
+
+OPCIÓN A (Más rápida - 1 sólo clic):
+1. Haz doble clic sobre "TransMac_Portatil.bat" (o clic derecho > "Ejecutar como administrador").
+2. Se abrirá la ventana gráfica de TransMac 11.
+3. Conecta tu pendrive USB y pulsa "Refrescar" si acabas de insertarlo.
+4. Selecciona tu sistema operativo (p. ej. Snow Leopard 10.6.8).
+5. Elige "MBR con Partición Activa 0x80" (recomendado para MacBook 2008).
+6. Pulsa "INICIAR GRABACIÓN FÍSICA EN DISCO USB".
+
+OPCIÓN B (Paquete con script separado):
+1. Ejecuta "TransMac_Win11.bat" como Administrador.
+
+------------------------------------------------------------------------------
+PASOS PARA ARRANCAR TU MACBOOK 2008:
+------------------------------------------------------------------------------
+1. Inserta el pendrive directamente en un puerto USB del MacBook.
+2. Enciende el MacBook manteniendo presionada la tecla "Option (Alt)" sin soltar.
+3. Aparecerá en la pantalla la unidad de instalación de Mac OS X.
+4. Pulsa Intro para iniciar el instalador.
+==============================================================================
