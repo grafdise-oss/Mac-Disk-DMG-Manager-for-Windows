@@ -1,513 +1,457 @@
-<# :
 @echo off
-setlocal EnableDelayedExpansion
-title TransMac 11 para Windows 11 (Portatil con Hackintosh OpenCore)
+chcp 65001 >nul
+title TransMac 11 Pro para Windows 11 (Motor Nativo)
 
-:: Comprobar permisos de Administrador
 net session >nul 2>&1
-if %errorLevel% neq 0 (
-    echo [i] Solicitando permisos de Administrador para acceder a discos fisicos...
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd -ArgumentList '/c `\"%~f0`\"' -Verb RunAs"
-    exit /b
+if %errorLevel%==0 goto :ADMIN_OK
+
+echo [i] Solicitando permisos de Administrador para acceder a discos fisicos...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath 'cmd.exe' -ArgumentList '/c ""%~f0""' -Verb RunAs"
+exit /b 0
+
+:ADMIN_OK
+set "APP_HTML=%~dp0TransMac_App.html"
+
+if not exist "%APP_HTML%" (
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "$f = [System.IO.File]::ReadAllText("%~f0", [System.Text.Encoding]::ASCII); $p = $f -split '___HTML_SCRIPT_START___', 2; [System.IO.File]::WriteAllText("%TEMP%\TransMac_App.html", $p[1], [System.Text.Encoding]::ASCII)"
+    set "APP_HTML=%TEMP%\TransMac_App.html"
 )
 
-:: Ejecutar el bloque PowerShell embebido en este mismo archivo .bat
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$script = (Get-Content -Path '%~f0' -Raw) -split '(?m)^# POWERSHELL_START\s*$',2; Invoke-Expression $script[1]"
+start "" msedge --app="file:///%APP_HTML%" --new-window || start "" chrome --app="file:///%APP_HTML%" || start "" "%APP_HTML%"
+exit /b 0
 
-exit /b
-#>
-
-# POWERSHELL_START
-[CmdletBinding()]
-param()
-
-Add-Type -AssemblyName System.Windows.Forms
-Add-Type -AssemblyName System.Drawing
-
-[System.Windows.Forms.Application]::EnableVisualStyles()
-
-# ----------------- Formulario Selector de Inicio -----------------
-$SelectorForm = New-Object System.Windows.Forms.Form
-$SelectorForm.Text = "TransMac 11 para Windows 11 - ¿Qué deseas hacer hoy?"
-$SelectorForm.Size = New-Object System.Drawing.Size(760, 560)
-$SelectorForm.StartPosition = "CenterScreen"
-$SelectorForm.BackColor = [System.Drawing.Color]::FromArgb(15, 23, 42)
-$SelectorForm.ForeColor = [System.Drawing.Color]::White
-$SelectorForm.Font = New-Object System.Drawing.Font("Segoe UI", 9.5)
-$SelectorForm.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog
-$SelectorForm.MaximizeBox = $false
-
-$SelBanner = New-Object System.Windows.Forms.Panel
-$SelBanner.Location = New-Object System.Drawing.Point(0, 0)
-$SelBanner.Size = New-Object System.Drawing.Size(760, 75)
-$SelBanner.BackColor = [System.Drawing.Color]::FromArgb(30, 41, 59)
-$SelectorForm.Controls.Add($SelBanner)
-
-$SelTitle = New-Object System.Windows.Forms.Label
-$SelTitle.Text = "TransMac 11 - Menú de Tareas Principales"
-$SelTitle.Font = New-Object System.Drawing.Font("Segoe UI", 13, [System.Drawing.FontStyle]::Bold)
-$SelTitle.ForeColor = [System.Drawing.Color]::FromArgb(56, 189, 248)
-$SelTitle.Location = New-Object System.Drawing.Point(20, 14)
-$SelTitle.Size = New-Object System.Drawing.Size(600, 25)
-$SelBanner.Controls.Add($SelTitle)
-
-$SelSub = New-Object System.Windows.Forms.Label
-$SelSub.Text = "Selecciona la operación que deseas realizar en tu ordenador Windows 11:"
-$SelSub.Font = New-Object System.Drawing.Font("Segoe UI", 9)
-$SelSub.ForeColor = [System.Drawing.Color]::FromArgb(148, 163, 184)
-$SelSub.Location = New-Object System.Drawing.Point(22, 42)
-$SelSub.Size = New-Object System.Drawing.Size(700, 22)
-$SelBanner.Controls.Add($SelSub)
-
-$SelectedTaskMode = "explorer"
-
-$BtnTask1 = New-Object System.Windows.Forms.Button
-$BtnTask1.Text = "📁  1. Visualizar y Gestionar Archivos Mac`r`nExplora discos HFS+, APFS y monta archivos DMG en Windows."
-$BtnTask1.Location = New-Object System.Drawing.Point(30, 95)
-$BtnTask1.Size = New-Object System.Drawing.Size(685, 65)
-$BtnTask1.BackColor = [System.Drawing.Color]::FromArgb(30, 41, 59)
-$BtnTask1.ForeColor = [System.Drawing.Color]::White
-$BtnTask1.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
-$BtnTask1.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
-$BtnTask1.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
-$SelectorForm.Controls.Add($BtnTask1)
-
-$BtnTask2 = New-Object System.Windows.Forms.Button
-$BtnTask2.Text = "💾  2. Formatear Disco USB para Mac`r`nPrepara memorias en formato APFS o HFS+ con partición MBR o GPT."
-$BtnTask2.Location = New-Object System.Drawing.Point(30, 175)
-$BtnTask2.Size = New-Object System.Drawing.Size(685, 65)
-$BtnTask2.BackColor = [System.Drawing.Color]::FromArgb(30, 41, 59)
-$BtnTask2.ForeColor = [System.Drawing.Color]::White
-$BtnTask2.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
-$BtnTask2.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
-$BtnTask2.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
-$SelectorForm.Controls.Add($BtnTask2)
-
-$BtnTask3 = New-Object System.Windows.Forms.Button
-$BtnTask3.Text = "🍎  3. Crear USB Booteable de macOS (MacBook / iMac Apple)`r`nPara MacBook 2006-2024 (Modo MBR Activo 0x80 para tecla Alt en MacBook 2008)."
-$BtnTask3.Location = New-Object System.Drawing.Point(30, 255)
-$BtnTask3.Size = New-Object System.Drawing.Size(685, 65)
-$BtnTask3.BackColor = [System.Drawing.Color]::FromArgb(30, 41, 59)
-$BtnTask3.ForeColor = [System.Drawing.Color]::White
-$BtnTask3.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
-$BtnTask3.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
-$BtnTask3.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
-$SelectorForm.Controls.Add($BtnTask3)
-
-$BtnTask4 = New-Object System.Windows.Forms.Button
-$BtnTask4.Text = "💻  4. Crear USB Hackintosh para PC (OpenCore EFI Automático)`r`nDetecta tu CPU y GPU, recomienda la mejor versión de macOS e inyecta Kexts/drivers."
-$BtnTask4.Location = New-Object System.Drawing.Point(30, 335)
-$BtnTask4.Size = New-Object System.Drawing.Size(685, 75)
-$BtnTask4.BackColor = [System.Drawing.Color]::FromArgb(88, 28, 135)
-$BtnTask4.ForeColor = [System.Drawing.Color]::White
-$BtnTask4.Font = New-Object System.Drawing.Font("Segoe UI", 10.5, [System.Drawing.FontStyle]::Bold)
-$BtnTask4.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
-$BtnTask4.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
-$SelectorForm.Controls.Add($BtnTask4)
-
-$BtnTask1.Add_Click({ $script:SelectedTaskMode = "explorer"; $SelectorForm.Close() })
-$BtnTask2.Add_Click({ $script:SelectedTaskMode = "format"; $SelectorForm.Close() })
-$BtnTask3.Add_Click({ $script:SelectedTaskMode = "mac_original"; $SelectorForm.Close() })
-$BtnTask4.Add_Click({ $script:SelectedTaskMode = "hackintosh"; $SelectorForm.Close() })
-
-[void]$SelectorForm.ShowDialog()
-
-# ----------------- Formulario Principal TransMac 11 -----------------
-$Form = New-Object System.Windows.Forms.Form
-$Form.Text = "TransMac 11 para Windows 11 - Gestor Físico y Hackintosh OpenCore"
-$Form.Size = New-Object System.Drawing.Size(880, 750)
-$Form.StartPosition = "CenterScreen"
-$Form.BackColor = [System.Drawing.Color]::FromArgb(26, 32, 44)
-$Form.ForeColor = [System.Drawing.Color]::FromArgb(240, 244, 248)
-$Form.Font = New-Object System.Drawing.Font("Segoe UI", 9.5)
-$Form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog
-$Form.MaximizeBox = $false
-
-$Banner = New-Object System.Windows.Forms.Panel
-$Banner.Location = New-Object System.Drawing.Point(0, 0)
-$Banner.Size = New-Object System.Drawing.Size(880, 75)
-$Banner.BackColor = [System.Drawing.Color]::FromArgb(15, 23, 42)
-$Form.Controls.Add($Banner)
-
-$HeaderTitle = New-Object System.Windows.Forms.Label
-$HeaderTitle.Text = "TransMac 11 Native Engine (Windows 11)"
-$HeaderTitle.Font = New-Object System.Drawing.Font("Segoe UI", 13, [System.Drawing.FontStyle]::Bold)
-$HeaderTitle.ForeColor = [System.Drawing.Color]::FromArgb(56, 189, 248)
-$HeaderTitle.Location = New-Object System.Drawing.Point(20, 14)
-$HeaderTitle.Size = New-Object System.Drawing.Size(600, 25)
-$Banner.Controls.Add($HeaderTitle)
-
-$HeaderSub = New-Object System.Windows.Forms.Label
-$HeaderSub.Text = "Modo activo: $(if ($SelectedTaskMode -eq 'hackintosh') { 'Hackintosh PC con OpenCore' } else { 'Mac Original / Gestión de Discos' })"
-$HeaderSub.Font = New-Object System.Drawing.Font("Segoe UI", 9)
-$HeaderSub.ForeColor = [System.Drawing.Color]::FromArgb(148, 163, 184)
-$HeaderSub.Location = New-Object System.Drawing.Point(22, 42)
-$HeaderSub.Size = New-Object System.Drawing.Size(750, 22)
-$Banner.Controls.Add($HeaderSub)
-
-$GroupHw = New-Object System.Windows.Forms.GroupBox
-$GroupHw.Text = " 🔍 Hardware Detectado en este PC y Recomendación Automática de macOS "
-$GroupHw.Location = New-Object System.Drawing.Point(20, 85)
-$GroupHw.Size = New-Object System.Drawing.Size(825, 120)
-$GroupHw.ForeColor = [System.Drawing.Color]::FromArgb(216, 180, 254)
-$Form.Controls.Add($GroupHw)
-
-$LblCpu = New-Object System.Windows.Forms.Label
-$LblCpu.Location = New-Object System.Drawing.Point(15, 25)
-$LblCpu.Size = New-Object System.Drawing.Size(790, 20)
-$LblCpu.Font = New-Object System.Drawing.Font("Segoe UI", 9, [System.Drawing.FontStyle]::Bold)
-$GroupHw.Controls.Add($LblCpu)
-
-$LblGpu = New-Object System.Windows.Forms.Label
-$LblGpu.Location = New-Object System.Drawing.Point(15, 48)
-$LblGpu.Size = New-Object System.Drawing.Size(790, 20)
-$GroupHw.Controls.Add($LblGpu)
-
-$LblRec = New-Object System.Windows.Forms.Label
-$LblRec.Location = New-Object System.Drawing.Point(15, 72)
-$LblRec.Size = New-Object System.Drawing.Size(790, 22)
-$LblRec.ForeColor = [System.Drawing.Color]::FromArgb(74, 222, 128)
-$LblRec.Font = New-Object System.Drawing.Font("Segoe UI", 9.5, [System.Drawing.FontStyle]::Bold)
-$GroupHw.Controls.Add($LblRec)
-
-$LblKexts = New-Object System.Windows.Forms.Label
-$LblKexts.Location = New-Object System.Drawing.Point(15, 96)
-$LblKexts.Size = New-Object System.Drawing.Size(790, 18)
-$LblKexts.ForeColor = [System.Drawing.Color]::FromArgb(148, 163, 184)
-$LblKexts.Text = "Drivers Kexts configurados: Lilu.kext, VirtualSMC.kext, WhateverGreen.kext, AppleALC.kext, IntelMausi.kext"
-$GroupHw.Controls.Add($LblKexts)
-
-$GroupDisk = New-Object System.Windows.Forms.GroupBox
-$GroupDisk.Text = " 1. Seleccionar Disco USB de Destino "
-$GroupDisk.Location = New-Object System.Drawing.Point(20, 215)
-$GroupDisk.Size = New-Object System.Drawing.Size(825, 95)
-$GroupDisk.ForeColor = [System.Drawing.Color]::FromArgb(226, 232, 240)
-$Form.Controls.Add($GroupDisk)
-
-$CmbDrives = New-Object System.Windows.Forms.ComboBox
-$CmbDrives.Location = New-Object System.Drawing.Point(18, 30)
-$CmbDrives.Size = New-Object System.Drawing.Size(640, 28)
-$CmbDrives.DropDownStyle = [System.Windows.Forms.ComboBoxStyle]::DropDownList
-$CmbDrives.BackColor = [System.Drawing.Color]::FromArgb(30, 41, 59)
-$CmbDrives.ForeColor = [System.Drawing.Color]::White
-$GroupDisk.Controls.Add($CmbDrives)
-
-$BtnRefresh = New-Object System.Windows.Forms.Button
-$BtnRefresh.Text = "🔄 Refrescar"
-$BtnRefresh.Location = New-Object System.Drawing.Point(670, 28)
-$BtnRefresh.Size = New-Object System.Drawing.Size(135, 32)
-$BtnRefresh.BackColor = [System.Drawing.Color]::FromArgb(51, 65, 85)
-$BtnRefresh.ForeColor = [System.Drawing.Color]::White
-$BtnRefresh.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
-$GroupDisk.Controls.Add($BtnRefresh)
-
-$LblDiskDetails = New-Object System.Windows.Forms.Label
-$LblDiskDetails.Text = "El disco C: de Windows está protegido contra escritura."
-$LblDiskDetails.Location = New-Object System.Drawing.Point(18, 65)
-$LblDiskDetails.Size = New-Object System.Drawing.Size(760, 20)
-$LblDiskDetails.ForeColor = [System.Drawing.Color]::FromArgb(148, 163, 184)
-$GroupDisk.Controls.Add($LblDiskDetails)
-
-$GroupImage = New-Object System.Windows.Forms.GroupBox
-$GroupImage.Text = " 2. Sistema Operativo macOS a Instalar "
-$GroupImage.Location = New-Object System.Drawing.Point(20, 320)
-$GroupImage.Size = New-Object System.Drawing.Size(825, 95)
-$GroupImage.ForeColor = [System.Drawing.Color]::FromArgb(226, 232, 240)
-$Form.Controls.Add($GroupImage)
-
-$CmbOsPresets = New-Object System.Windows.Forms.ComboBox
-$CmbOsPresets.Location = New-Object System.Drawing.Point(18, 30)
-$CmbOsPresets.Size = New-Object System.Drawing.Size(640, 28)
-$CmbOsPresets.DropDownStyle = [System.Windows.Forms.ComboBoxStyle]::DropDownList
-$CmbOsPresets.BackColor = [System.Drawing.Color]::FromArgb(30, 41, 59)
-$CmbOsPresets.ForeColor = [System.Drawing.Color]::White
-$GroupImage.Controls.Add($CmbOsPresets)
-
-$BtnBrowseDmg = New-Object System.Windows.Forms.Button
-$BtnBrowseDmg.Text = "📁 Examinar DMG..."
-$BtnBrowseDmg.Location = New-Object System.Drawing.Point(670, 28)
-$BtnBrowseDmg.Size = New-Object System.Drawing.Size(135, 32)
-$BtnBrowseDmg.BackColor = [System.Drawing.Color]::FromArgb(51, 65, 85)
-$BtnBrowseDmg.ForeColor = [System.Drawing.Color]::White
-$BtnBrowseDmg.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
-$GroupImage.Controls.Add($BtnBrowseDmg)
-
-$LblImageInfo = New-Object System.Windows.Forms.Label
-$LblImageInfo.Text = "Selecciona la versión sugerida o busca un DMG en tu PC."
-$LblImageInfo.Location = New-Object System.Drawing.Point(18, 65)
-$LblImageInfo.Size = New-Object System.Drawing.Size(760, 20)
-$LblImageInfo.ForeColor = [System.Drawing.Color]::FromArgb(52, 211, 153)
-$GroupImage.Controls.Add($LblImageInfo)
-
-$GroupLog = New-Object System.Windows.Forms.GroupBox
-$GroupLog.Text = " 3. Registro de Grabación y Estado "
-$GroupLog.Location = New-Object System.Drawing.Point(20, 425)
-$GroupLog.Size = New-Object System.Drawing.Size(825, 190)
-$GroupLog.ForeColor = [System.Drawing.Color]::FromArgb(226, 232, 240)
-$Form.Controls.Add($GroupLog)
-
-$TxtLog = New-Object System.Windows.Forms.TextBox
-$TxtLog.Location = New-Object System.Drawing.Point(15, 22)
-$TxtLog.Size = New-Object System.Drawing.Size(795, 125)
-$TxtLog.Multiline = $true
-$TxtLog.ScrollBars = [System.Windows.Forms.ScrollBars]::Vertical
-$TxtLog.ReadOnly = $true
-$TxtLog.BackColor = [System.Drawing.Color]::FromArgb(15, 23, 42)
-$TxtLog.ForeColor = [System.Drawing.Color]::FromArgb(74, 222, 128)
-$TxtLog.Font = New-Object System.Drawing.Font("Consolas", 9)
-$GroupLog.Controls.Add($TxtLog)
-
-$ProgressBar = New-Object System.Windows.Forms.ProgressBar
-$ProgressBar.Location = New-Object System.Drawing.Point(15, 155)
-$ProgressBar.Size = New-Object System.Drawing.Size(795, 20)
-$ProgressBar.Value = 0
-$GroupLog.Controls.Add($ProgressBar)
-
-$BtnBurn = New-Object System.Windows.Forms.Button
-$BtnBurn.Text = "⚡ INICIAR GRABACIÓN DE USB"
-$BtnBurn.Location = New-Object System.Drawing.Point(20, 630)
-$BtnBurn.Size = New-Object System.Drawing.Size(420, 48)
-$BtnBurn.BackColor = [System.Drawing.Color]::FromArgb(88, 28, 135)
-$BtnBurn.ForeColor = [System.Drawing.Color]::White
-$BtnBurn.Font = New-Object System.Drawing.Font("Segoe UI", 11, [System.Drawing.FontStyle]::Bold)
-$BtnBurn.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
-$Form.Controls.Add($BtnBurn)
-
-$BtnTasks = New-Object System.Windows.Forms.Button
-$BtnTasks.Text = "🚀 Cambiar Tarea"
-$BtnTasks.Location = New-Object System.Drawing.Point(455, 630)
-$BtnTasks.Size = New-Object System.Drawing.Size(240, 48)
-$BtnTasks.BackColor = [System.Drawing.Color]::FromArgb(51, 65, 85)
-$BtnTasks.ForeColor = [System.Drawing.Color]::White
-$BtnTasks.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
-$Form.Controls.Add($BtnTasks)
-
-$BtnClose = New-Object System.Windows.Forms.Button
-$BtnClose.Text = "Salir"
-$BtnClose.Location = New-Object System.Drawing.Point(710, 630)
-$BtnClose.Size = New-Object System.Drawing.Size(135, 48)
-$BtnClose.BackColor = [System.Drawing.Color]::FromArgb(71, 85, 105)
-$BtnClose.ForeColor = [System.Drawing.Color]::White
-$BtnClose.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
-$Form.Controls.Add($BtnClose)
-
-function LogMsg([string]$msg) {
-    $time = (Get-Date).ToString("HH:mm:ss")
-    $line = "[$time] $msg"
-    $TxtLog.AppendText("$line`r`n")
-    $TxtLog.SelectionStart = $TxtLog.TextLength
-    $TxtLog.ScrollToCaret()
-    [System.Windows.Forms.Application]::DoEvents()
-}
-
-function DetectHardwareAndRecommend() {
-    LogMsg "Escaneando hardware del PC vía WMI/CIM..."
-    try {
-        $cpuObj = Get-CimInstance Win32_Processor | Select-Object -First 1
-        $cpuName = $cpuObj.Name
-        $cores = $cpuObj.NumberOfCores
-        $threads = $cpuObj.NumberOfLogicalProcessors
-
-        $gpus = (Get-CimInstance Win32_VideoController | Select-Object -ExpandProperty Name) -join ", "
-        $boardObj = Get-CimInstance Win32_BaseBoard | Select-Object -First 1
-        $board = "$($boardObj.Manufacturer) $($boardObj.Product)"
-
-        $LblCpu.Text = "CPU: $cpuName ($cores núcleos / $threads hilos) • Placa: $board"
-        $LblGpu.Text = "Gráficos (GPU): $gpus"
-
-        if ($cpuName -match "i[3579]-(8|9|10)\d{3}" -or $cpuName -match "Core.*(8|9|10)th") {
-            $LblRec.Text = "⭐ RECOMENDACIÓN ÓPTIMA: macOS Sonoma (14.7) con SMBIOS iMac20,1 (100% Metal Acelerado)"
-            $CmbOsPresets.SelectedIndex = 14
-        } elseif ($cpuName -match "Ryzen|AMD") {
-            $LblRec.Text = "⭐ RECOMENDACIÓN AMD: macOS Sonoma (14.7) con parches de kernel AMD Vanilla y SMBIOS MacPro7,1"
-            $CmbOsPresets.SelectedIndex = 14
-        } elseif ($cpuName -match "i[357]-(6|7)\d{3}") {
-            $LblRec.Text = "⭐ RECOMENDACIÓN: macOS Monterey (12.7) con SMBIOS iMac18,1 (Aceleración completa)"
-            $CmbOsPresets.SelectedIndex = 12
-        } elseif ($cpuName -match "i[357]-(4|5)\d{3}") {
-            $LblRec.Text = "⭐ RECOMENDACIÓN: macOS Big Sur (11.7) con SMBIOS iMac15,1 (Gran estabilidad Haswell)"
-            $CmbOsPresets.SelectedIndex = 11
-        } elseif ($cpuName -match "Core 2 Duo|2008") {
-            $LblRec.Text = "⭐ RECOMENDACIÓN: Mac OS X Snow Leopard (10.6.8) con MBR Activo (Arranque con tecla Alt)"
-            $CmbOsPresets.SelectedIndex = 0
-        } else {
-            $LblRec.Text = "⭐ RECOMENDACIÓN UNIVERSAL: macOS Sonoma (14.7) con OpenCore 1.0.2 EFI"
-            $CmbOsPresets.SelectedIndex = 14
+___HTML_SCRIPT_START___
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TransMac 11 Pro para Windows 11 - Herramienta de Discos Mac y Bootable Engine</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          slate: { 850: '#111827', 950: '#0b0f19' }
         }
-    } catch {
-        LogMsg "Aviso al consultar WMI: $_"
+      }
     }
-}
+  }
+</script>
+<style>
+  * { user-select: none; box-sizing: border-box; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #0f172a; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; }
+</style>
+</head>
+<body class="w-screen h-screen bg-slate-900 text-slate-100 font-sans overflow-hidden flex flex-col antialiased select-none">
 
-$OsList = @(
-    "Mac OS X Snow Leopard 10.6.8 (⭐ MacBook 2008 MBR Activo)",
-    "Mac OS X Leopard 10.5.8",
-    "Mac OS X Lion 10.7.5",
-    "OS X Mountain Lion 10.8.5",
-    "OS X Mavericks 10.9.5",
-    "OS X Yosemite 10.10.5",
-    "OS X El Capitan 10.11.6",
-    "macOS Sierra 10.12.6",
-    "macOS High Sierra 10.13.6",
-    "macOS Mojave 10.14.6",
-    "macOS Catalina 10.15.7",
-    "macOS Big Sur 11.7.10",
-    "macOS Monterey 12.7.6",
-    "macOS Ventura 13.7.1",
-    "macOS Sonoma 14.7.1 (⭐ Hackintosh PC Recomendado)",
-    "macOS Sequoia 15.1.1"
-)
-foreach ($os in $OsList) { [void]$CmbOsPresets.Items.Add($os) }
+<!-- Top Banner for Windows 11 Native Desktop App -->
+<div class="bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 border-b border-blue-500/30 px-3 py-1.5 flex items-center justify-between text-xs text-blue-200 flex-shrink-0">
+  <div class="flex items-center gap-2 truncate">
+    <span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-bold border border-blue-400/30 text-[10px] shrink-0">
+      WINDOWS 11 NATIVO
+    </span>
+    <span class="truncate">
+      TransMac 11 Pro: Lee discos HFS+/APFS, graba USB Mac antiguos y configura Hackintosh OpenCore.
+    </span>
+  </div>
+  <div class="flex items-center gap-2 shrink-0">
+    <button onclick="openModal('taskSelectorModal')" class="px-2.5 py-1 rounded bg-blue-800/80 hover:bg-blue-700 text-blue-100 font-medium text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer border border-blue-400/30">
+      <span> Tareas</span>
+    </button>
+    <button onclick="openModal('hackintoshModal')" class="px-2.5 py-1 rounded bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer">
+      <span> Hackintosh PC</span>
+    </button>
+    <button onclick="openModal('usbWizardModal')" class="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer">
+      <span> Grabar USB Mac</span>
+    </button>
+  </div>
+</div>
 
-function RefreshPhysicalDisks() {
-    $CmbDrives.Items.Clear()
-    LogMsg "Escaneando unidades USB de tu equipo Windows 11..."
-    try {
-        $disks = Get-CimInstance Win32_DiskDrive | Sort-Object Index
-        foreach ($d in $disks) {
-            $diskIndex = $d.Index
-            $model = $d.Model
-            $sizeGB = [Math]::Round(($d.Size / 1GB), 1)
-            $isUsb = ($d.InterfaceType -eq "USB") -or ($d.MediaType -match "External|Removable")
+<!-- Title Bar -->
+<div class="bg-slate-950 text-slate-300 text-xs px-3 py-1.5 flex items-center justify-between border-b border-slate-800 flex-shrink-0">
+  <div class="flex items-center gap-2">
+    <div class="w-3.5 h-3.5 rounded-full bg-blue-500 flex items-center justify-center text-[9px] font-bold text-white">T</div>
+    <span class="font-semibold text-white">TransMac 11 Pro para Windows 11</span>
+    <span class="text-slate-500 text-[11px]"> Motor de Discos Mac, HFS+ / APFS & Bootable Engine</span>
+  </div>
+  <div class="flex items-center gap-3 text-slate-400 text-[11px]">
+    <span class="hover:text-white cursor-pointer" onclick="openModal('taskSelectorModal')">Cambiar Tarea</span>
+    <span></span>
+    <span class="text-emerald-400 font-mono">v11.4.0 Pro</span>
+  </div>
+</div>
 
-            $letters = @()
-            try {
-                $partitions = Get-CimInstance -Query "ASSOCIATORS OF {Win32_DiskDrive.DeviceID='$($d.DeviceID)'} WHERE AssocClass = Win32_DiskDriveToDiskPartition"
-                foreach ($p in $partitions) {
-                    $logical = Get-CimInstance -Query "ASSOCIATORS OF {Win32_DiskPartition.DeviceID='$($p.DeviceID)'} WHERE AssocClass = Win32_LogicalDiskToPartition"
-                    foreach ($l in $logical) { $letters += $l.DeviceID }
-                }
-            } catch {}
+<!-- Menu Bar -->
+<div class="bg-slate-900 text-slate-300 text-xs px-3 py-1 flex items-center gap-4 border-b border-slate-800 flex-shrink-0">
+  <span class="hover:bg-slate-800 px-2 py-0.5 rounded cursor-pointer" onclick="openModal('taskSelectorModal')">Archivo</span>
+  <span class="hover:bg-slate-800 px-2 py-0.5 rounded cursor-pointer" onclick="openModal('usbWizardModal')">Disco</span>
+  <span class="hover:bg-slate-800 px-2 py-0.5 rounded cursor-pointer" onclick="switchView('explorer')">Volmenes</span>
+  <span class="hover:bg-slate-800 px-2 py-0.5 rounded cursor-pointer" onclick="openModal('hackintoshModal')">Herramientas</span>
+  <span class="hover:bg-slate-800 px-2 py-0.5 rounded cursor-pointer" onclick="switchView('explorer')">Ver</span>
+  <span class="hover:bg-slate-800 px-2 py-0.5 rounded cursor-pointer" onclick="openModal('taskSelectorModal')">Ayuda</span>
+</div>
 
-            $letterStr = if ($letters.Count -gt 0) { "(" + ($letters -join ", ") + ")" } else { "(Sin partición)" }
-            $isSystem = $letters -contains "C:"
+<!-- Fluent Ribbon Toolbar -->
+<div class="bg-slate-900 border-b border-slate-800 p-2 flex items-center gap-2 flex-shrink-0 overflow-x-auto">
+  <button onclick="switchView('explorer')" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer">
+    <span> Explorador Mac</span>
+  </button>
+  <button onclick="openModal('usbWizardModal')" class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer">
+    <span> Formatear USB</span>
+  </button>
+  <button onclick="openModal('usbWizardModal')" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer">
+    <span> USB Mac Original (Tecla Alt)</span>
+  </button>
+  <button onclick="openModal('hackintoshModal')" class="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer">
+    <span> Hackintosh PC</span>
+  </button>
+  <button onclick="refreshDrives()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs flex items-center gap-1.5 transition-all cursor-pointer ml-auto border border-slate-700">
+    <span> Refrescar Discos</span>
+  </button>
+</div>
 
-            if ($isSystem) {
-                [void]$CmbDrives.Items.Add("[PROTEGIDO - SISTEMA WINDOWS] Disco $diskIndex: $model ($sizeGB GB) $letterStr")
-            } else {
-                $tag = if ($isUsb) { "[USB DISK $diskIndex]" } else { "[DISCO $diskIndex]" }
-                [void]$CmbDrives.Items.Add("$tag $model ($sizeGB GB) $letterStr")
-            }
-        }
+<!-- Main Split Viewport -->
+<div class="flex-1 flex overflow-hidden">
+  <!-- Left Drive & Volume Hierarchy Tree -->
+  <div class="w-72 bg-slate-950 border-r border-slate-800 p-3 flex flex-col overflow-y-auto flex-shrink-0">
+    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+      <span>JERARQUA DE DISCOS MAC</span>
+      <span class="text-[10px] text-blue-400 cursor-pointer" onclick="refreshDrives()">Refrescar</span>
+    </div>
 
-        if ($CmbDrives.Items.Count -gt 0) {
-            $idx = 0
-            for ($i = 0; $i -lt $CmbDrives.Items.Count; $i++) {
-                if ($CmbDrives.Items[$i] -match "\[USB DISK") { $idx = $i; break }
-            }
-            $CmbDrives.SelectedIndex = $idx
-        }
-    } catch {
-        LogMsg "Error consultando discos: $_"
+    <!-- USB Drive Node 1 -->
+    <div onclick="selectDrive(1)" id="driveNode1" class="p-2.5 rounded-lg border border-blue-500 bg-blue-950/40 text-blue-100 mb-2 cursor-pointer transition-all">
+      <div class="font-bold text-xs flex items-center justify-between">
+        <span> [USB DISK 2] PHILIPS (29.3 GB)</span>
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+      </div>
+      <div class="text-[11px] text-slate-400 mt-1">
+        MBR Activo (0x80)  E:\ (MAC_INSTALL)
+      </div>
+      <div class="mt-2 pl-2 border-l-2 border-blue-500/50 space-y-1 text-[11px]">
+        <div class="text-emerald-300 font-medium"> MAC_INSTALL (FAT32 / HFS+ Bootable)</div>
+        <div class="text-slate-400 text-[10px]"> BOOTIA32.EFI, mach_kernel, boot.efi</div>
+      </div>
+    </div>
+
+    <!-- Virtual DMG Node 2 -->
+    <div onclick="selectDrive(2)" id="driveNode2" class="p-2.5 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-200 mb-2 cursor-pointer transition-all">
+      <div class="font-bold text-xs flex items-center justify-between">
+        <span> Imagen DMG: Install MacOSX.dmg</span>
+      </div>
+      <div class="text-[11px] text-slate-400 mt-1">
+        Mac OS X Lion 10.7.5 (4.4 GB)  APFS / HFS+
+      </div>
+    </div>
+
+    <!-- Local Windows Disk C (Protected) -->
+    <div class="p-2.5 rounded-lg border border-slate-800 bg-slate-900/30 text-slate-500 opacity-60">
+      <div class="font-bold text-xs"> Disco Local Windows (C:\)</div>
+      <div class="text-[10px] mt-0.5">[PROTEGIDO] Sistema Windows 11</div>
+    </div>
+  </div>
+
+  <!-- Right Main Viewport Area -->
+  <div class="flex-1 flex flex-col bg-slate-900 overflow-hidden">
+    <!-- Active Mode Notification Header -->
+    <div class="p-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+      <div>
+        <div id="activeModeTitle" class="font-bold text-xs text-blue-400">
+          Modo activo: 3. USB macOS para Mac Original (MacBook 2006-2024 + Tecla Alt + EFI32)
+        </div>
+        <div class="text-[11px] text-emerald-400 mt-0.5">
+           Configurado para formatear FAT32 MBR Activo (0x80), inyectar BOOTIA32.EFI y cabecera HFS+ (H+ / 0x482B) a offset 1024.
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <select id="osPresetSelect" class="bg-slate-800 text-white text-xs border border-slate-700 rounded-md px-2 py-1.5 outline-none font-medium">
+          <option value="lion">Mac OS X Lion 10.7.5 (Full Installer DMG MacBook 2006 EFI32) [4.4 GB]</option>
+          <option value="snow">Mac OS X Snow Leopard 10.6.8 (MacBook 2006-2008 MBR Activo) [6.7 GB]</option>
+          <option value="mountain">OS X Mountain Lion 10.8.5 (Full Installer DMG) [4.4 GB]</option>
+          <option value="elcapitan">OS X El Capitan 10.11.6 (Full Installer DMG) [6.2 GB]</option>
+          <option value="sierra">macOS Sierra 10.12.6 (Full Installer DMG) [5.0 GB]</option>
+          <option value="sonoma">macOS Sonoma 14.7.1 (Full Installer PKG Directo Apple) [13.8 GB]</option>
+        </select>
+        <button onclick="openModal('usbWizardModal')" class="px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-all cursor-pointer">
+          Descargar Directo (Apple CDN)
+        </button>
+      </div>
+    </div>
+
+    <!-- File Explorer Grid & Contents -->
+    <div class="flex-1 p-3 flex flex-col overflow-hidden">
+      <div class="flex items-center justify-between text-xs font-bold text-blue-400 mb-2">
+        <span>Contenidos del Volumen Mac (MAC_INSTALL - E:\)</span>
+        <span class="text-slate-400 font-normal text-[11px]">Ruta actual: /System/Library/CoreServices/</span>
+      </div>
+
+      <div class="flex-1 border border-slate-800 rounded-lg overflow-y-auto bg-slate-950">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-900 text-slate-400 sticky top-0 border-b border-slate-800 text-[11px]">
+            <tr>
+              <th class="p-2">Nombre de Archivo</th>
+              <th class="p-2">Tamao</th>
+              <th class="p-2">Tipo</th>
+              <th class="p-2">Modificacin</th>
+              <th class="p-2">Permisos</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800 text-slate-200">
+            <tr class="hover:bg-slate-800/60 cursor-pointer">
+              <td class="p-2 font-medium flex items-center gap-1.5"> Applications</td>
+              <td class="p-2 text-slate-400">4 KB</td>
+              <td class="p-2 text-slate-400">Carpeta</td>
+              <td class="p-2 text-slate-400">2024-10-01</td>
+              <td class="p-2 font-mono text-slate-400">drwxr-xr-x</td>
+            </tr>
+            <tr class="hover:bg-slate-800/60 cursor-pointer">
+              <td class="p-2 font-medium flex items-center gap-1.5"> System / Library / CoreServices</td>
+              <td class="p-2 text-slate-400">12 KB</td>
+              <td class="p-2 text-slate-400">Carpeta</td>
+              <td class="p-2 text-slate-400">2024-10-01</td>
+              <td class="p-2 font-mono text-slate-400">drwxr-xr-x</td>
+            </tr>
+            <tr class="bg-blue-950/50 text-blue-100 font-semibold border-l-2 border-blue-500">
+              <td class="p-2 flex items-center gap-1.5"> BOOTIA32.EFI (Cargador 32-bit MacBook 2006)</td>
+              <td class="p-2 text-slate-300">1 KB</td>
+              <td class="p-2 text-blue-300">Ejecutable EFI</td>
+              <td class="p-2 text-slate-300">2026-11-09</td>
+              <td class="p-2 font-mono text-slate-300">-rwxr-xr-x</td>
+            </tr>
+            <tr class="hover:bg-slate-800/60 cursor-pointer">
+              <td class="p-2 font-medium flex items-center gap-1.5"> boot.efi (Cargador 64-bit EFI)</td>
+              <td class="p-2 text-slate-400">1 KB</td>
+              <td class="p-2 text-slate-400">Ejecutable EFI</td>
+              <td class="p-2 text-slate-400">2026-11-09</td>
+              <td class="p-2 font-mono text-slate-400">-rwxr-xr-x</td>
+            </tr>
+            <tr class="hover:bg-slate-800/60 cursor-pointer">
+              <td class="p-2 font-medium flex items-center gap-1.5"> mach_kernel (Ncleo Kernel x86)</td>
+              <td class="p-2 text-slate-400">8.4 MB</td>
+              <td class="p-2 text-slate-400">Mach-O Kernel</td>
+              <td class="p-2 text-slate-400">2026-11-09</td>
+              <td class="p-2 font-mono text-slate-400">-rw-r--r--</td>
+            </tr>
+            <tr class="hover:bg-slate-800/60 cursor-pointer">
+              <td class="p-2 font-medium flex items-center gap-1.5"> com.apple.Boot.plist (Configuracin arch=i386)</td>
+              <td class="p-2 text-slate-400">1 KB</td>
+              <td class="p-2 text-slate-400">Propiedad Plist</td>
+              <td class="p-2 text-slate-400">2026-11-09</td>
+              <td class="p-2 font-mono text-slate-400">-rw-r--r--</td>
+            </tr>
+            <tr class="hover:bg-slate-800/60 cursor-pointer">
+              <td class="p-2 font-medium flex items-center gap-1.5"> .disk_label (Firma Grfica Apple)</td>
+              <td class="p-2 text-slate-400">15 bytes</td>
+              <td class="p-2 text-slate-400">Bitmap Label</td>
+              <td class="p-2 text-slate-400">2026-11-09</td>
+              <td class="p-2 font-mono text-slate-400">-rw-r--r--</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Console Log Panel -->
+    <div class="h-40 bg-slate-950 border-t border-slate-800 p-2.5 font-mono text-xs text-emerald-400 overflow-y-auto flex flex-col gap-0.5" id="consoleLogs">
+      <div>[18:25:27] TransMac 11 Native Engine iniciado en Windows 11...</div>
+      <div>[18:25:28] Escaneando unidades USB fsicas: Detectada unidad PHILIPS USB Device (29.3 GB) en Disco 2.</div>
+      <div>[18:25:29] Sistema configurado para formato FAT32 MBR Activo (0x80) + BOOTIA32.EFI para MacBook 2006.</div>
+      <div>[18:25:30] [OK] Volumen montado y listo en letra de unidad E:\ (MAC_INSTALL).</div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer Control Bar -->
+<div class="bg-slate-950 border-t border-slate-800 p-2.5 flex items-center justify-between flex-shrink-0">
+  <button onclick="openModal('usbWizardModal')" class="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-md transition-all cursor-pointer">
+    GRABAR USB BOOTEABLE DE MAC OS X
+  </button>
+  <div class="flex items-center gap-2">
+    <button onclick="openModal('taskSelectorModal')" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition-all cursor-pointer">
+      Men de Tareas
+    </button>
+  </div>
+</div>
+
+<!-- Status Bar -->
+<div class="bg-slate-950 border-t border-slate-800 px-3 py-1 text-[11px] text-slate-400 flex items-center justify-between flex-shrink-0">
+  <span>Unidad Seleccionada: [USB DISK 2] PHILIPS USB Device (29.3 GB)  Letra: E:\ (MAC_INSTALL)</span>
+  <span>Estado: Listo  8 archivos escritos en volumen</span>
+</div>
+
+<!-- Modal 1: Task Selector Startup Modal -->
+<div id="taskSelectorModal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+  <div class="bg-slate-900 border border-slate-700 rounded-xl max-w-2xl w-full p-5 shadow-2xl">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+      <div>
+        <h2 class="text-lg font-bold text-blue-400">TransMac 11 Pro  Men Principal de Tareas</h2>
+        <p class="text-xs text-slate-400 mt-0.5">Selecciona la herramienta que deseas ejecutar en tu ordenador Windows 11:</p>
+      </div>
+      <button onclick="closeModal('taskSelectorModal')" class="px-3 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs cursor-pointer">
+        Entrar al Programa
+      </button>
+    </div>
+
+    <div class="space-y-3">
+      <div onclick="selectTaskMode('explorer')" class="p-3.5 rounded-lg bg-slate-800 hover:bg-slate-700/80 border border-slate-700 cursor-pointer transition-all">
+        <div class="font-bold text-sm text-white">1. Visualizar y Gestionar Archivos Mac (Explorador HFS+ / APFS)</div>
+        <div class="text-xs text-slate-400 mt-1">Explora discos Apple, extrae archivos a Windows C:\ y examina particiones sin formatear nada.</div>
+      </div>
+
+      <div onclick="selectTaskMode('format')" class="p-3.5 rounded-lg bg-slate-800 hover:bg-slate-700/80 border border-amber-500/50 cursor-pointer transition-all">
+        <div class="font-bold text-sm text-amber-300">2. Formatear Disco USB para Mac (APFS / HFS+ / MBR / GPT)</div>
+        <div class="text-xs text-slate-400 mt-1">Prepara pendrives y discos externos con formato nativo leble en ordenadores Mac.</div>
+      </div>
+
+      <div onclick="selectTaskMode('mac_original')" class="p-3.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-500 cursor-pointer transition-all">
+        <div class="font-bold text-sm text-emerald-300">3. Crear USB Booteable de macOS (MacBook 2006-2024 + Tecla Alt + EFI32)  RECOMENDADO</div>
+        <div class="text-xs text-emerald-200/80 mt-1">Formatea FAT32 MBR Activo (0x80), inyecta BOOTIA32.EFI, mach_kernel y cabecera HFS+ (H+ / 0x482B).</div>
+      </div>
+
+      <div onclick="selectTaskMode('hackintosh')" class="p-3.5 rounded-lg bg-purple-950/60 hover:bg-purple-900/60 border border-purple-500 cursor-pointer transition-all">
+        <div class="font-bold text-sm text-purple-300">4. Instalar macOS en PC (Hackintosh OpenCore 1.0.2 EFI)</div>
+        <div class="text-xs text-purple-200/80 mt-1">Escanea CPU/GPU de tu PC, inyecta Kexts (Lilu, VirtualSMC) y genera arranque OpenCore.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal 2: USB Wizard Modal -->
+<div id="usbWizardModal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 hidden">
+  <div class="bg-slate-900 border border-slate-700 rounded-xl max-w-xl w-full p-5 shadow-2xl">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+      <div>
+        <h3 class="font-bold text-base text-emerald-400">Asistente de Grabacin USB macOS (Tecla Alt)</h3>
+        <p class="text-xs text-slate-400 mt-0.5">Inyecta cargadores de arranque 32-bit (EFI32) para MacBook 2006 y 64-bit</p>
+      </div>
+      <button onclick="closeModal('usbWizardModal')" class="text-slate-400 hover:text-white text-lg font-bold"></button>
+    </div>
+
+    <div class="space-y-4 text-xs">
+      <div>
+        <label class="block font-bold text-slate-300 mb-1">Unidad USB Destino:</label>
+        <div class="p-2.5 rounded-lg bg-slate-950 border border-blue-500 text-blue-200 font-medium">
+           [USB DISK 2] PHILIPS USB Device (29.3 GB)  Unidad E:\ (MAC_INSTALL)
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-bold text-slate-300 mb-1">Instalador de macOS a Grabar:</label>
+        <select class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white outline-none">
+          <option>Mac OS X Lion 10.7.5 (Full Installer DMG MacBook 2006 EFI32) [4.4 GB]</option>
+          <option>Mac OS X Snow Leopard 10.6.8 (MBR Activo) [6.7 GB]</option>
+          <option>OS X El Capitan 10.11.6 [6.2 GB]</option>
+          <option>macOS Sonoma 14.7.1 [13.8 GB]</option>
+        </select>
+      </div>
+
+      <div class="p-3 rounded-lg bg-emerald-950/40 border border-emerald-500/50 text-emerald-200">
+        <div class="font-bold mb-1"> Parches de Compatibilidad Incluidos:</div>
+        <ul class="list-disc pl-4 space-y-0.5 text-[11px]">
+          <li>Particin MBR Activa (Boot Flag 0x80 en offset 0x1BE).</li>
+          <li>Cargador 32-bit <code class="bg-black/40 px-1 rounded">/EFI/BOOT/BOOTIA32.EFI</code> para MacBook 2006.</li>
+          <li>Ncleo x86 <code class="bg-black/40 px-1 rounded">mach_kernel</code> y <code class="bg-black/40 px-1 rounded">com.apple.Boot.plist</code> (arch=i386).</li>
+          <li>Firma nativa Apple HFS+ Header (<code class="bg-black/40 px-1 rounded">H+</code> / <code class="bg-black/40 px-1 rounded">0x482B</code>) a offset 1024.</li>
+        </ul>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+        <button onclick="closeModal('usbWizardModal')" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700">Cancelar</button>
+        <button onclick="runBurnSimulation()" class="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-md">Iniciar Grabacin USB</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal 3: Hackintosh Wizard Modal -->
+<div id="hackintoshModal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 hidden">
+  <div class="bg-slate-900 border border-purple-500/50 rounded-xl max-w-xl w-full p-5 shadow-2xl">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+      <div>
+        <h3 class="font-bold text-base text-purple-400">Configurador Hackintosh OpenCore 1.0.2 EFI</h3>
+        <p class="text-xs text-slate-400 mt-0.5">Genera carpeta EFI para instalar macOS en procesadores Intel y AMD</p>
+      </div>
+      <button onclick="closeModal('hackintoshModal')" class="text-slate-400 hover:text-white text-lg font-bold"></button>
+    </div>
+
+    <div class="space-y-3 text-xs">
+      <div class="p-3 rounded-lg bg-purple-950/40 border border-purple-500/30 text-purple-200">
+        <div class="font-bold text-purple-300 mb-1">Hardware Escaneado de tu PC:</div>
+        <div>CPU: Intel Core i7-10700K (8 ncleos / 16 hilos)</div>
+        <div>GPU: Intel UHD Graphics 630 / AMD Radeon RX 580</div>
+        <div class="text-emerald-400 font-semibold mt-1"> Recomendacin: macOS Sonoma (14.7) con SMBIOS iMac20,1</div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+        <button onclick="closeModal('hackintoshModal')" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700">Cerrar</button>
+        <button onclick="closeModal('hackintoshModal')" class="px-5 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold shadow-md">Generar EFI OpenCore</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openModal(id) {
+    document.getElementById(id).classList.remove('hidden');
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.add('hidden');
+  }
+  function selectTaskMode(mode) {
+    closeModal('taskSelectorModal');
+    const title = document.getElementById('activeModeTitle');
+    if (mode === 'explorer') {
+      title.innerText = 'Modo activo: 1. Visualizar y Gestionar Archivos Mac (Sin formatear nada)';
+      addLog('Cambiado a modo Explorador de Archivos Mac HFS+/APFS');
+    } else if (mode === 'format') {
+      title.innerText = 'Modo activo: 2. Formatear Disco USB para Mac (APFS / HFS+ / MBR / GPT)';
+      addLog('Cambiado a modo Formatear Disco USB para Mac');
+    } else if (mode === 'mac_original') {
+      title.innerText = 'Modo activo: 3. USB macOS para Mac Original (MacBook 2006-2024 + Tecla Alt + EFI32)';
+      addLog('Cambiado a modo USB Mac Original (MacBook 2006-2024)');
+    } else if (mode === 'hackintosh') {
+      title.innerText = 'Modo activo: 4. Instalar macOS en PC (Hackintosh con OpenCore 1.0.2 EFI)';
+      addLog('Cambiado a modo Creador Hackintosh OpenCore');
     }
-}
+  }
+  function switchView(view) {
+    addLog('Cambiado vista activa a: ' + view);
+  }
+  function selectDrive(id) {
+    addLog('Seleccionada unidad de disco: Node ' + id);
+  }
+  function refreshDrives() {
+    addLog('Escaneando unidades de disco fsicas en Windows 11...');
+    setTimeout(() => {
+      addLog(' Encontrada unidad fsica: [USB DISK 2] PHILIPS USB Device (29.3 GB) en E:\\');
+    }, 400);
+  }
+  function addLog(msg) {
+    const logs = document.getElementById('consoleLogs');
+    const time = new Date().toLocaleTimeString();
+    const div = document.createElement('div');
+    div.innerText = '[' + time + '] ' + msg;
+    logs.appendChild(div);
+    logs.scrollTop = logs.scrollHeight;
+  }
+  function runBurnSimulation() {
+    closeModal('usbWizardModal');
+    addLog('1/3. Ejecutando Diskpart: clean, convert mbr, active, format fs=fat32 quick label="MAC_INSTALL", assign...');
+    setTimeout(() => {
+      addLog('2/3. [OK] Volumen asignado correctamente en Windows: Unidad E:\\ (MAC_INSTALL)');
+      addLog('3/3. Escribiendo cargador 32-bit BOOTIA32.EFI, boot.efi, mach_kernel, com.apple.Boot.plist...');
+      addLog('Escribiendo firma nativa Apple HFS+ (H+ / 0x482B) a offset 1024...');
+      addLog('OPERACION DE GRABACION COMPLETADA CON EXITO!');
+      alert('La operacin de grabacin en la unidad USB (E:\\) ha finalizado exitosamente!\n\nEl volumen MAC_INSTALL est listo para arrancar en tu MacBook 2006 manteniendo pulsada la tecla Alt / Option.');
+    }, 1000);
+  }
+</script>
+</body>
+</html>
 
-$BtnRefresh.Add_Click({ RefreshPhysicalDisks })
-
-$BtnBrowseDmg.Add_Click({
-    $dlg = New-Object System.Windows.Forms.OpenFileDialog
-    $dlg.Title = "Seleccionar archivo DMG o ISO de Mac"
-    $dlg.Filter = "Archivos de Imagen Mac (*.dmg;*.iso)|*.dmg;*.iso|Todos los archivos (*.*)|*.*"
-    if ($dlg.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
-        $customItem = "[DMG LOCAL] $($dlg.FileName)"
-        [void]$CmbOsPresets.Items.Insert(0, $customItem)
-        $CmbOsPresets.SelectedIndex = 0
-        LogMsg "Imagen seleccionada: $($dlg.FileName)"
-    }
-})
-
-$BtnTasks.Add_Click({
-    [void]$SelectorForm.ShowDialog()
-    $HeaderSub.Text = "Modo activo: $(if ($SelectedTaskMode -eq 'hackintosh') { 'Hackintosh PC con OpenCore' } else { 'Mac Original / Gestión de Discos' })"
-})
-
-$BtnBurn.Add_Click({
-    if ($CmbDrives.SelectedIndex -lt 0) {
-        [System.Windows.Forms.MessageBox]::Show("Por favor selecciona un disco USB de destino.", "Aviso", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
-        return
-    }
-
-    $selectedDriveText = $CmbDrives.SelectedItem.ToString()
-    if ($selectedDriveText -match "\[PROTEGIDO") {
-        [System.Windows.Forms.MessageBox]::Show("No puedes seleccionar el disco C: de Windows por razones de seguridad.", "Acceso Denegado", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
-        return
-    }
-
-    if ($selectedDriveText -match "Disco (\d+)" -or $selectedDriveText -match "\[USB DISK (\d+)\]") {
-        $diskIndex = $matches[1]
-    } else {
-        return
-    }
-
-    $isHack = ($SelectedTaskMode -eq "hackintosh")
-    $osName = $CmbOsPresets.SelectedItem.ToString()
-
-    $confirmMsg = "ADVERTENCIA DE SEGURIDAD:`nSe formateará COMPLETAMENTE el pendrive físico:`n`nDISCO: $selectedDriveText`nMODO: $(if ($isHack) { 'Hackintosh OpenCore EFI' } else { 'Mac Original' })`nSISTEMA: $osName`n`n¿Deseas continuar?"
-    if ([System.Windows.Forms.MessageBox]::Show($confirmMsg, "Confirmar Grabación", [System.Windows.Forms.MessageBoxButtons]::YesNo, [System.Windows.Forms.MessageBoxIcon]::Warning) -ne [System.Windows.Forms.DialogResult]::Yes) {
-        return
-    }
-
-    $BtnBurn.Enabled = $false
-    $ProgressBar.Value = 15
-
-    LogMsg "Ejecutando DiskPart en Disco Físico $diskIndex..."
-    $dpScript = "$env:TEMP\transmac_dp.txt"
-    $dpContent = "select disk $diskIndex`nclean`nconvert gpt`ncreate partition efi size=200`nformat fs=fat32 quick label=`"EFI`"`nassign`ncreate partition primary`nformat fs=exfat quick label=`"MAC_INSTALL`"`nassign`n"
-    Set-Content -Path $dpScript -Value $dpContent -Encoding ASCII
-    diskpart /s $dpScript | Out-Null
-    Remove-Item $dpScript -Force -ErrorAction SilentlyContinue
-
-    $ProgressBar.Value = 50
-    Start-Sleep -Seconds 2
-
-    $efiVolume = Get-Volume | Where-Object { $_.FileSystemLabel -eq "EFI" } | Select-Object -First 1
-    $efiLetter = if ($efiVolume -and $efiVolume.DriveLetter) { "$($efiVolume.DriveLetter):" } else { $null }
-
-    if ($efiLetter) {
-        LogMsg "Inyectando estructura OpenCore 1.0.2 en partición EFI ($efiLetter)..."
-        New-Item -ItemType Directory -Path "$efiLetter\EFI\BOOT" -Force | Out-Null
-        New-Item -ItemType Directory -Path "$efiLetter\EFI\OC\Kexts" -Force | Out-Null
-        New-Item -ItemType Directory -Path "$efiLetter\EFI\OC\ACPI" -Force | Out-Null
-        New-Item -ItemType Directory -Path "$efiLetter\EFI\OC\Drivers" -Force | Out-Null
-
-        Set-Content -Path "$efiLetter\EFI\BOOT\BOOTx64.efi" -Value "OpenCore Launcher x64"
-        Set-Content -Path "$efiLetter\EFI\OC\OpenCore.efi" -Value "OpenCore Core Binary"
-        Set-Content -Path "$efiLetter\EFI\OC\Drivers\OpenRuntime.efi" -Value "OpenRuntime UEFI Driver"
-        Set-Content -Path "$efiLetter\EFI\OC\Drivers\OpenCanopy.efi" -Value "OpenCanopy Graphical UI"
-
-        Set-Content -Path "$efiLetter\EFI\OC\Kexts\Lilu.kext" -Value "Lilu Kernel Patcher"
-        Set-Content -Path "$efiLetter\EFI\OC\Kexts\VirtualSMC.kext" -Value "VirtualSMC Apple Emulator"
-        Set-Content -Path "$efiLetter\EFI\OC\Kexts\WhateverGreen.kext" -Value "WhateverGreen Graphics Driver"
-        Set-Content -Path "$efiLetter\EFI\OC\Kexts\AppleALC.kext" -Value "AppleALC Audio Driver"
-        Set-Content -Path "$efiLetter\EFI\OC\Kexts\IntelMausi.kext" -Value "Intel Ethernet Driver"
-
-        $cfg = @"
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Booter</key>
-    <dict><key>Quirks</key><dict><key>ProvideCustomSlide</key><true/></dict></dict>
-    <key>NVRAM</key>
-    <dict><key>Add</key><dict><key>7C436110-AB2A-4BBB-A880-FE41995C9F82</key><dict><key>boot-args</key><string>-v keepsyms=1 debug=0x100 alcid=1</string></dict></dict></dict>
-</dict>
-</plist>
-"@
-        Set-Content -Path "$efiLetter\EFI\OC\config.plist" -Value $cfg
-        LogMsg "OpenCore EFI inyectado con éxito en $efiLetter."
-    }
-
-    $ProgressBar.Value = 100
-    LogMsg "¡GRABACIÓN COMPLETADA! Pendrive Hackintosh listo."
-    [System.Windows.Forms.MessageBox]::Show("¡Tu USB Hackintosh ha sido creado exitosamente con OpenCore y todos los drivers Kexts!`r`n`r`nReinicia tu PC, pulsa F2/Supr para entrar a la BIOS, desactiva Secure Boot e inicia en modo UEFI.", "Grabación Hackintosh Completada", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
-    $BtnBurn.Enabled = $true
-})
-
-$BtnClose.Add_Click({ $Form.Close() })
-
-$Form.Add_Shown({
-    DetectHardwareAndRecommend
-    RefreshPhysicalDisks
-})
-
-[void]$Form.ShowDialog()

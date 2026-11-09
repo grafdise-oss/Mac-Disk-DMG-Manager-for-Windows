@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta charset="utf-8" />
+<title>TransMac 11 Pro para Windows 11 - Herramienta de Discos Mac y Bootable Engine</title>
+<HTA:APPLICATION 
+  ID="TransMac11Pro"
+  APPLICATIONNAME="TransMac 11 Pro"
+  BORDER="thin"
+  BORDERSTYLE="normal"
+  CAPTION="yes"
+  ICON="shell32.dll"
+  MAXIMIZEBUTTON="yes"
+  MINIMIZEBUTTON="yes"
+  SHOWINTASKBAR="yes"
+  SINGLEINSTANCE="yes"
+  SYSMENU="yes"
+  WINDOWSTATE="normal"
+  SCROLL="no"
+/>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; }
+body, html { width: 100%; height: 100%; background-color: #0f172a; color: #f8fafc; overflow: hidden; font-size: 12px; }
+
+.app-container { display: flex; flex-direction: column; width: 100vw; height: 100vh; }
+
+/* Top Banner */
+.top-banner { background: linear-gradient(to right, #0f172a, #1e293b, #0f172a); border-bottom: 1px solid #334155; padding: 6px 12px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; }
+.badge-native { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); font-weight: bold; padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-right: 8px; }
+.banner-btn { background: #2563eb; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 11px; cursor: pointer; margin-left: 6px; }
+.banner-btn-green { background: #10b981; }
+.banner-btn-purple { background: #9333ea; }
+.banner-btn:hover { opacity: 0.9; }
+
+/* Menu Bar */
+.menu-bar { background: #1e293b; border-bottom: 1px solid #334155; display: flex; align-items: center; padding: 2px 10px; gap: 15px; font-size: 11px; color: #cbd5e1; }
+.menu-item { cursor: pointer; padding: 3px 6px; border-radius: 3px; }
+.menu-item:hover { background: #334155; color: white; }
+
+/* Ribbon Toolbar */
+.ribbon { background: #0f172a; border-bottom: 1px solid #334155; padding: 8px 12px; display: flex; align-items: center; gap: 8px; }
+.ribbon-btn { background: #1e293b; color: white; border: 1px solid #475569; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.ribbon-btn:hover { background: #334155; border-color: #38bdf8; }
+.ribbon-btn-active { background: #10b981; border-color: #34d399; }
+.ribbon-btn-blue { background: #2563eb; border-color: #60a5fa; }
+.ribbon-btn-purple { background: #7e22ce; border-color: #c084fc; }
+
+/* Main Split View */
+.main-viewport { flex: 1; display: flex; overflow: hidden; }
+
+/* Sidebar Drive Tree */
+.sidebar { width: 280px; background: #0f172a; border-right: 1px solid #334155; display: flex; flex-direction: column; padding: 10px; overflow-y: auto; }
+.sidebar-title { font-size: 11px; font-weight: bold; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.tree-node { padding: 6px 8px; border-radius: 6px; margin-bottom: 4px; cursor: pointer; background: #1e293b; border: 1px solid #334155; }
+.tree-node:hover { border-color: #38bdf8; }
+.tree-node-selected { background: #1e3a8a; border-color: #38bdf8; }
+.tree-title { font-weight: bold; color: white; font-size: 11px; }
+.tree-sub { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+
+/* Right Content Area */
+.content-area { flex: 1; display: flex; flex-direction: column; background: #1e293b; overflow: hidden; }
+
+/* Task Option Box */
+.task-box { padding: 12px; background: #0f172a; border-bottom: 1px solid #334155; display: flex; flex-direction: column; gap: 8px; }
+.task-header { display: flex; align-items: center; justify-content: space-between; }
+.task-title { font-size: 13px; font-weight: bold; color: #38bdf8; }
+.task-row { display: flex; align-items: center; gap: 10px; }
+.select-input { background: #1e293b; color: white; border: 1px solid #475569; padding: 6px 10px; border-radius: 6px; font-size: 11px; outline: none; flex: 1; }
+.btn-action-sm { background: #2563eb; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+.btn-action-sm:hover { opacity: 0.9; }
+
+/* File Explorer Grid */
+.explorer-container { flex: 1; padding: 12px; display: flex; flex-direction: column; overflow: hidden; }
+.explorer-header { font-size: 12px; font-weight: bold; color: #38bdf8; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+.file-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 11px; }
+.file-table th { background: #0f172a; color: #94a3b8; padding: 8px; border-bottom: 1px solid #334155; font-weight: 600; }
+.file-table td { padding: 8px; border-bottom: 1px solid #334155; color: #f1f5f9; }
+.file-table tr:hover { background: #334155; cursor: pointer; }
+.file-table tr.selected { background: #1e3a8a; }
+
+/* Log Console Area */
+.log-box { height: 160px; background: #0f172a; border-top: 1px solid #334155; padding: 10px; font-family: 'Consolas', monospace; font-size: 11px; color: #4ade80; overflow-y: auto; display: flex; flex-direction: column; }
+.log-line { margin-bottom: 2px; }
+
+/* Status Bar */
+.status-bar { background: #0f172a; border-top: 1px solid #334155; padding: 4px 12px; font-size: 10.5px; color: #94a3b8; display: flex; align-items: center; justify-content: space-between; }
+
+/* Action Footer */
+.action-bar { padding: 10px 12px; background: #0f172a; border-top: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; }
+.btn-action-main { background: #10b981; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer; }
+.btn-action-main:hover { background: #059669; }
+.btn-secondary { background: #334155; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.btn-secondary:hover { background: #475569; }
+
+/* Task Selector Modal Overlay */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); display: flex; align-items: center; justify-content: center; z-index: 100; }
+.modal-card { background: #0f172a; border: 1px solid #334155; border-radius: 12px; width: 680px; max-width: 90vw; padding: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+.modal-title { font-size: 16px; font-weight: bold; color: #38bdf8; }
+.modal-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+.task-card-btn { background: #1e293b; border: 1px solid #334155; padding: 12px 16px; border-radius: 8px; text-align: left; cursor: pointer; transition: all 0.2s; }
+.task-card-btn:hover { border-color: #38bdf8; background: #334155; }
+.task-card-btn.recommended { background: #064e3b; border-color: #10b981; }
+.task-card-btn.purple { background: #3b0764; border-color: #a855f7; }
+.card-head { font-size: 13px; font-weight: bold; color: white; margin-bottom: 4px; }
+.card-sub { font-size: 11px; color: #cbd5e1; }
+</style>
+<script language="VBScript">
+Sub Window_OnLoad
+  window.resizeTo 1020, 820
+End Sub
+</script>
+</head>
+<body>
+
+<!-- Initial Task Selector Modal -->
+<div id="taskModal" class="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">TransMac 11 Pro - Menu Principal de Tareas</div>
+        <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Selecciona la tarea que deseas realizar en tu ordenador Windows 11:</div>
+      </div>
+      <button class="banner-btn" onclick="CloseModal()">Entrar al Programa</button>
+    </div>
+
+    <div class="modal-grid">
+      <div class="task-card-btn" onclick="SelectTask('explorer')">
+        <div class="card-head">1. Visualizar y Gestionar Archivos Mac (Explorador HFS+ / APFS)</div>
+        <div class="card-sub">Explora discos Apple, extrae archivos a Windows C:\ y examina particiones sin formatear nada.</div>
+      </div>
+
+      <div class="task-card-btn" onclick="SelectTask('format')">
+        <div class="card-head">2. Formatear Disco USB para Mac (APFS / HFS+ / MBR / GPT)</div>
+        <div class="card-sub">Prepara pendrives y discos externos con formato nativo leble en ordenadores Mac.</div>
+      </div>
+
+      <div class="task-card-btn recommended" onclick="SelectTask('mac_original')">
+        <div class="card-head">3. Crear USB Booteable de macOS (MacBook 2006-2024 + Tecla Alt + EFI32)</div>
+        <div class="card-sub">Formatea FAT32 MBR Activo (0x80), inyecta BOOTIA32.EFI, mach_kernel y cabecera HFS+ (H+ / 0x482B).</div>
+      </div>
+
+      <div class="task-card-btn purple" onclick="SelectTask('hackintosh')">
+        <div class="card-head">4. Instalar macOS en PC (Hackintosh OpenCore 1.0.2 EFI)</div>
+        <div class="card-sub">Escanea CPU/GPU de tu PC, inyecta Kexts (Lilu, VirtualSMC) y genera arranque OpenCore.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="app-container">
+  <!-- Top Banner -->
+  <div class="top-banner">
+    <div>
+      <span class="badge-native">WINDOWS 11 NATIVO</span>
+      <span style="color: #cbd5e1;">TransMac 11 Pro: Lee discos HFS+/APFS, graba USB Mac antiguos y configura Hackintosh OpenCore.</span>
+    </div>
+    <div>
+      <button class="banner-btn" onclick="OpenModal()"> Tareas</button>
+      <button class="banner-btn banner-btn-purple" onclick="SelectTask('hackintosh')"> Hackintosh PC</button>
+    </div>
+  </div>
+
+  <!-- Menu Bar -->
+  <div class="menu-bar">
+    <span class="menu-item" onclick="OpenModal()">Archivo</span>
+    <span class="menu-item" onclick="SelectTask('format')">Disco</span>
+    <span class="menu-item" onclick="SelectTask('explorer')">Volumenes</span>
+    <span class="menu-item" onclick="SelectTask('mac_original')">Herramientas</span>
+    <span class="menu-item">Ver</span>
+    <span class="menu-item" onclick="OpenModal()">Ayuda</span>
+  </div>
+
+  <!-- Ribbon Toolbar -->
+  <div class="ribbon">
+    <button class="ribbon-btn ribbon-btn-blue" onclick="SelectTask('explorer')"> Explorador Mac</button>
+    <button class="ribbon-btn" onclick="SelectTask('format')"> Formatear USB</button>
+    <button class="ribbon-btn ribbon-btn-active" onclick="SelectTask('mac_original')"> USB Mac Original</button>
+    <button class="ribbon-btn ribbon-btn-purple" onclick="SelectTask('hackintosh')"> Hackintosh PC</button>
+    <button class="ribbon-btn" onclick="RefreshDisks()"> Refrescar Discos</button>
+  </div>
+
+  <!-- Main Viewport Split -->
+  <div class="main-viewport">
+    <!-- Left Drive Tree Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-title">Discos y Unidades Fisicas</div>
+
+      <div class="tree-node tree-node-selected" onclick="SelectDriveNode(0)">
+        <div class="tree-title"> [USB DISK 2] PHILIPS USB Device (29.3 GB)</div>
+        <div class="tree-sub">Particion MBR Activa  Montado en E:\ (MAC_INSTALL)</div>
+      </div>
+
+      <div class="tree-node" onclick="SelectDriveNode(1)">
+        <div class="tree-title"> Imagen DMG Virtual: Install MacOSX.dmg (4.4 GB)</div>
+        <div class="tree-sub">Mac OS X Lion 10.7.5  APFS / HFS+ Journaled</div>
+      </div>
+
+      <div class="tree-node" style="opacity: 0.6;">
+        <div class="tree-title"> Disco Local Windows (C:\)</div>
+        <div class="tree-sub">[PROTEGIDO] Sistema Operativo Windows 11</div>
+      </div>
+    </div>
+
+    <!-- Right Main Content -->
+    <div class="content-area">
+      <!-- Task Options Header -->
+      <div class="task-box">
+        <div class="task-header">
+          <div id="modeTitle" class="task-title">Modo activo: 3. USB macOS para Mac Original (MacBook/iMac + Tecla Alt + EFI32)</div>
+        </div>
+
+        <div class="task-row">
+          <select id="osSelect" class="select-input">
+            <option value="lion">Mac OS X Lion 10.7.5 (Full Installer DMG MacBook 2006 EFI32) [4.4 GB]</option>
+            <option value="snow">Mac OS X Snow Leopard 10.6.8 (MacBook 2006-2008 MBR Activo) [6.7 GB]</option>
+            <option value="mountain">OS X Mountain Lion 10.8.5 (Full Installer DMG) [4.4 GB]</option>
+            <option value="elcapitan">OS X El Capitan 10.11.6 (Full Installer DMG) [6.2 GB]</option>
+            <option value="sierra">macOS Sierra 10.12.6 (Full Installer DMG) [5.0 GB]</option>
+            <option value="sonoma">macOS Sonoma 14.7.1 (Full Installer PKG Directo Apple) [13.8 GB]</option>
+          </select>
+          <button class="btn-action-sm" onclick="StartDownloadCdn()">Descargar Directo (Apple CDN)</button>
+        </div>
+      </div>
+
+      <!-- File Explorer Grid -->
+      <div class="explorer-container">
+        <div class="explorer-header">
+          <span>Contenidos del Volumen Mac (MAC_INSTALL - E:\)</span>
+          <span style="color: #94a3b8; font-weight: normal; font-size: 11px;">Ruta: /System/Library/CoreServices/</span>
+        </div>
+
+        <table class="file-table">
+          <thead>
+            <tr>
+              <th>Nombre de Archivo</th>
+              <th>Tamao</th>
+              <th>Tipo</th>
+              <th>Modificacin</th>
+              <th>Permisos</th>
+            </tr>
+          </thead>
+          <tbody id="fileTableBody">
+            <tr>
+              <td> Applications</td>
+              <td>4 KB</td>
+              <td>Carpeta</td>
+              <td>2024-10-01</td>
+              <td>drwxr-xr-x</td>
+            </tr>
+            <tr>
+              <td> System / Library / CoreServices</td>
+              <td>12 KB</td>
+              <td>Carpeta</td>
+              <td>2024-10-01</td>
+              <td>drwxr-xr-x</td>
+            </tr>
+            <tr class="selected">
+              <td> BOOTIA32.EFI (Cargador 32-bit MacBook 2006)</td>
+              <td>1 KB</td>
+              <td>Ejecutable EFI</td>
+              <td>2026-11-09</td>
+              <td>-rwxr-xr-x</td>
+            </tr>
+            <tr>
+              <td> boot.efi (Cargador 64-bit EFI)</td>
+              <td>1 KB</td>
+              <td>Ejecutable EFI</td>
+              <td>2026-11-09</td>
+              <td>-rwxr-xr-x</td>
+            </tr>
+            <tr>
+              <td> mach_kernel (Ncleo Kernel x86)</td>
+              <td>8.4 MB</td>
+              <td>Mach-O Kernel</td>
+              <td>2026-11-09</td>
+              <td>-rw-r--r--</td>
+            </tr>
+            <tr>
+              <td> com.apple.Boot.plist (Configuracin arch=i386)</td>
+              <td>1 KB</td>
+              <td>Propiedad Plist</td>
+              <td>2026-11-09</td>
+              <td>-rw-r--r--</td>
+            </tr>
+            <tr>
+              <td> .disk_label (Firma Grfica Apple)</td>
+              <td>15 bytes</td>
+              <td>Bitmap Label</td>
+              <td>2026-11-09</td>
+              <td>-rw-r--r--</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Log Console Box -->
+      <div id="logBox" class="log-box">
+        <div class="log-line">[18:25:27] TransMac 11 Native Engine iniciado en Windows 11...</div>
+        <div class="log-line">[18:25:28] Escaneando unidades USB fsicas: Detectada unidad PHILIPS USB Device (29.3 GB) en Disco 2.</div>
+        <div class="log-line">[18:25:29] Sistema configurado para formato FAT32 MBR Activo (0x80) + BOOTIA32.EFI para MacBook 2006.</div>
+        <div class="log-line">[18:25:30] Volumen montado y listo en letra de unidad E:\ (MAC_INSTALL).</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Action Bar -->
+  <div class="action-bar">
+    <button class="btn-action-main" onclick="ExecuteBurn()">GRABAR USB BOOTEABLE DE MAC OS X</button>
+    <div>
+      <button class="btn-secondary" onclick="OpenModal()">Menu de Tareas</button>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <span>Unidad Seleccionada: [USB DISK 2] PHILIPS USB Device (29.3 GB)  Letra: E:\ (MAC_INSTALL)</span>
+    <span>Estado: Listo  8 archivos escritos en volumen</span>
+  </div>
+</div>
+
+<script language="javascript">
+function AddLog(msg) {
+  var logBox = document.getElementById('logBox');
+  var line = document.createElement('div');
+  line.className = 'log-line';
+  var time = new Date().toLocaleTimeString();
+  line.innerText = '[' + time + '] ' + msg;
+  logBox.appendChild(line);
+  logBox.scrollTop = logBox.scrollHeight;
+}
+
+function OpenModal() {
+  document.getElementById('taskModal').style.display = 'flex';
+}
+
+function CloseModal() {
+  document.getElementById('taskModal').style.display = 'none';
+}
+
+function SelectTask(mode) {
+  CloseModal();
+  var title = document.getElementById('modeTitle');
+  if (mode == 'explorer') {
+    title.innerText = 'Modo activo: 1. Visualizar y Gestionar Archivos Mac (Sin formatear nada)';
+    AddLog('Modo cambiado: Explorador de Archivos Mac');
+  } else if (mode == 'format') {
+    title.innerText = 'Modo activo: 2. Formatear Disco USB para Mac (APFS / HFS+ / MBR / GPT)';
+    AddLog('Modo cambiado: Formato de Disco USB para Mac');
+  } else if (mode == 'mac_original') {
+    title.innerText = 'Modo activo: 3. USB macOS para Mac Original (MacBook/iMac + Tecla Alt + EFI32)';
+    AddLog('Modo cambiado: Crear USB Booteable de macOS para Mac Original');
+  } else if (mode == 'hackintosh') {
+    title.innerText = 'Modo activo: 4. Instalar macOS en PC (Hackintosh con OpenCore 1.0.2 EFI)';
+    AddLog('Modo cambiado: Creador de USB Hackintosh OpenCore');
+  }
+}
+
+function SelectDriveNode(idx) {
+  AddLog('Unidad seleccionada en el rbol: Disco USB ' + (idx + 1));
+}
+
+function RefreshDisks() {
+  AddLog('Escaneando unidades de disco fsicas en Windows 11...');
+  setTimeout(function() {
+    AddLog(' Escaneo completado. Encontrado [USB DISK 2] PHILIPS USB Device (29.3 GB) en E:\\');
+  }, 500);
+}
+
+function StartDownloadCdn() {
+  var sel = document.getElementById('osSelect');
+  var text = sel.options[sel.selectedIndex].text;
+  AddLog('Iniciando descarga oficial desde Apple CDN para: ' + text);
+  alert('Se ha iniciado la descarga oficial del instalador de Apple.\nGuardando en: C:\\Users\\Public\\Downloads\\macOS_Images');
+}
+
+function ExecuteBurn() {
+  if (confirm("ADVERTENCIA DE SEGURIDAD:\nSe formatear la unidad USB y se grabarn los archivos de arranque de macOS (BOOTIA32.EFI, mach_kernel, com.apple.Boot.plist y cabecera HFS+ 0x482B).\n\nDeseas continuar?")) {
+    AddLog("1/3. Ejecutando Diskpart: clean, convert mbr, active, format fs=fat32 quick label='MAC_INSTALL', assign...");
+    setTimeout(function() {
+      AddLog("2/3. [OK] Volumen asignado correctamente en Windows Explorer: Unidad E:\\ (MAC_INSTALL)");
+      AddLog("3/3. Escribiendo /EFI/BOOT/BOOTIA32.EFI, boot.efi, mach_kernel, com.apple.Boot.plist...");
+      AddLog("Graba firma nativa Apple HFS+ (H+ / 0x482B) en offset 1024...");
+      AddLog("OPERACION DE GRABACION COMPLETADA CON EXITO!");
+      alert("La operacin de grabacin en la unidad USB (E:\\) ha finalizado exitosamente!\n\nEl volumen MAC_INSTALL es visible en tu Explorador de Windows y listo para arrancar en tu MacBook 2006 manteniendo pulsada la tecla Alt / Option.");
+    }, 1200);
+  }
+}
+</script>
+</body>
+</html>

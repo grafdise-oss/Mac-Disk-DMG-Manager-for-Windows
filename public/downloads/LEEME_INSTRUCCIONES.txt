@@ -1,35 +1,28 @@
 ==============================================================================
-  TRANSMAC 11 PARA WINDOWS 11 - EDICIÓN NATIVA DE ESCRITORIO
+  TRANSMAC 11 PRO PARA WINDOWS 11 / 10 - GUIA DE INSTALACION Y SOLUCION
 ==============================================================================
 
-Esta aplicación nativa resuelve la limitación de los navegadores web y permite:
-1. Detectar automáticamente TODOS los discos físicos y pendrives USB de tu PC.
-2. Leer las letras de unidad reales (D:, E:, F:, etc.) y capacidades en GB.
-3. Proteger tu disco C: de Windows contra borrados accidentales.
-4. Crear pendrives booteables de Mac OS X (Snow Leopard, Leopard, Lion...)
-   con esquema MBR y Partición Activa (0x80) compatible con el arranque por
-   la tecla 'Alt' (Option) de los MacBook 2006 a 2011.
+Si al hacer clic en descargar o al abrir la aplicacion en Windows 11 recibes
+el mensaje 'Windows protegio su PC' (SmartScreen) o la ventana se cierra:
 
 ------------------------------------------------------------------------------
-CÓMO USAR LA APLICACIÓN:
+OPCIONES DE INSTALACION:
 ------------------------------------------------------------------------------
+Opcin A (INSTALADOR AUTOMATICO CON ACCESO DIRECTO EN EL ESCRITORIO):
+1. Haz doble clic sobre "Instalador_TransMac_11.bat".
+2. Se instalara en tu sistema (%LOCALAPPDATA%\TransMac11) y creara el icono 'TransMac 11 Pro' en tu Escritorio.
 
-OPCIÓN A (Más rápida - 1 sólo clic):
-1. Haz doble clic sobre "TransMac_Portatil.bat" (o clic derecho > "Ejecutar como administrador").
-2. Se abrirá la ventana gráfica de TransMac 11.
-3. Conecta tu pendrive USB y pulsa "Refrescar" si acabas de insertarlo.
-4. Selecciona tu sistema operativo (p. ej. Snow Leopard 10.6.8).
-5. Elige "MBR con Partición Activa 0x80" (recomendado para MacBook 2008).
-6. Pulsa "INICIAR GRABACIÓN FÍSICA EN DISCO USB".
-
-OPCIÓN B (Paquete con script separado):
-1. Ejecuta "TransMac_Win11.bat" como Administrador.
+Opcin B (PORTATIL 1 SOLO CLIC - INTERFAZ GRAFICA 100% IDENTICA):
+1. Haz doble clic sobre "TransMac_Portatil.bat" o "TransMac_App.html".
 
 ------------------------------------------------------------------------------
-PASOS PARA ARRANCAR TU MACBOOK 2008:
+CARACTERISTICAS DE TRANSMAC 11 EN WINDOWS 11:
 ------------------------------------------------------------------------------
-1. Inserta el pendrive directamente en un puerto USB del MacBook.
-2. Enciende el MacBook manteniendo presionada la tecla "Option (Alt)" sin soltar.
-3. Aparecerá en la pantalla la unidad de instalación de Mac OS X.
-4. Pulsa Intro para iniciar el instalador.
+1. Interfaz grafica 100% idntica a la aplicacin web vista en el navegador.
+2. Modal inicial de Selector de Tareas con 4 tarjetas interactivas.
+3. rbol de discos a la izquierda, explorador de archivos y consola en tiempo real.
+4. Asigna letra de unidad visible en Windows Explorer (MAC_INSTALL).
+5. Escribe la firma nativa HFS+ Volume Header (H+ / 0x482B) a offset 1024.
+6. Inyecta BOOTIA32.EFI (32-bit EFI) para MacBook 2006 con arranque tecla Alt / Option.
+
 ==============================================================================

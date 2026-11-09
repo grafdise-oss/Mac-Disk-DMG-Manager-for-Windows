@@ -91,96 +91,224 @@ export const DownloadWindowsAppModal: React.FC<DownloadWindowsAppModalProps> = (
           </div>
 
           {/* Download Options Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Option 1: Standalone Portable .BAT */}
-            <div className="p-5 rounded-xl bg-slate-800/80 border-2 border-blue-500/60 hover:border-blue-400 transition-all flex flex-col justify-between group relative overflow-hidden">
-              <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">
-                ⭐ Más Rápido (1 Clic)
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Option 1: Official Windows Installer */}
+            <div className="p-5 rounded-xl bg-slate-800/90 border-2 border-emerald-500/70 hover:border-emerald-400 transition-all flex flex-col justify-between group relative overflow-hidden shadow-lg shadow-emerald-900/20">
+              <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">
+                ⭐ Instalador Automático
               </div>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-lg bg-emerald-600/20 text-emerald-400">
+                    <Sparkles className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white text-base">Instalador TransMac 11</h3>
+                    <p className="text-xs text-emerald-300 font-mono">Instalador_TransMac_11.bat</p>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  {lang === 'es'
+                    ? 'Instala la aplicación en tu sistema y crea un acceso directo en tu Escritorio de Windows 11 para abrir el programa en cualquier momento.'
+                    : 'Installs TransMac to AppData and creates a Desktop shortcut.'}
+                </p>
+                <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span>Crea icono en el Escritorio de Windows</span>
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span>Desbloqueo automático de permisos UAC</span>
+                </div>
+              </div>
+
+              <div className="mt-5 pt-4 border-t border-slate-700/60">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = `/downloads/Instalador_TransMac_11.bat?t=${Date.now()}`;
+                    fetch(url)
+                      .then(res => res.blob())
+                      .then(blob => {
+                        const blobUrl = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = blobUrl;
+                        a.download = 'Instalador_TransMac_11.bat';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(blobUrl);
+                      })
+                      .catch(() => { window.location.href = url; });
+                  }}
+                  className="w-full py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-all cursor-pointer"
+                >
+                  <Download className="w-4 h-4" />
+                  {lang === 'es' ? 'Descargar Instalador' : 'Download Installer'}
+                </button>
+              </div>
+            </div>
+
+            {/* Option 2: Standalone Portable .BAT */}
+            <div className="p-5 rounded-xl bg-slate-800/80 border border-blue-500/50 hover:border-blue-400 transition-all flex flex-col justify-between group relative overflow-hidden">
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 rounded-lg bg-blue-600/20 text-blue-400">
                     <Terminal className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-white text-base">TransMac Portátil (.BAT)</h3>
-                    <p className="text-xs text-blue-300 font-mono">TransMac_Portatil.bat (19 KB)</p>
+                    <h3 className="font-bold text-white text-base">Ejecutable Portátil</h3>
+                    <p className="text-xs text-blue-300 font-mono">TransMac_Portatil.bat</p>
                   </div>
                 </div>
                 <p className="text-xs text-slate-300 leading-relaxed">
                   {lang === 'es'
-                    ? 'Un único archivo ejecutable. Lo descargas, haces doble clic (o clic derecho > "Ejecutar como administrador") y se abre de inmediato la interfaz gráfica nativa de TransMac 11 en tu escritorio de Windows 11. No requiere descomprimir nada.'
-                    : 'A single self-contained executable file. Just download and double click to run TransMac desktop app.'}
+                    ? 'Un único ejecutable sin instalación. Abre directamente la interfaz gráfica nativa con aislamiento goto :EOF.'
+                    : 'Portable standalone executable file.'}
                 </p>
                 <div className="flex items-center gap-2 text-[11px] text-slate-400">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Detección automática de pendrives USB reales</span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                  <span>Detección automática de discos USB</span>
                 </div>
                 <div className="flex items-center gap-2 text-[11px] text-slate-400">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Protección del disco C:\ de Windows</span>
-                </div>
-                <div className="flex items-center gap-2 text-[11px] text-slate-400">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Esquema MBR con Partición Activa (0x80) para MacBook 2008</span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                  <span>Soporte MacBook 2008 y OpenCore</span>
                 </div>
               </div>
 
               <div className="mt-5 pt-4 border-t border-slate-700/60">
-                <a
-                  href="/downloads/TransMac_Portatil.bat"
-                  download="TransMac_Portatil.bat"
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = `/downloads/TransMac_Portatil.bat?t=${Date.now()}`;
+                    fetch(url)
+                      .then(res => res.blob())
+                      .then(blob => {
+                        const blobUrl = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = blobUrl;
+                        a.download = 'TransMac_Portatil.bat';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(blobUrl);
+                      })
+                      .catch(() => { window.location.href = url; });
+                  }}
                   className="w-full py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 transition-all cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
-                  {lang === 'es' ? 'Descargar TransMac_Portatil.bat' : 'Download Portable .BAT'}
-                </a>
+                  {lang === 'es' ? 'Descargar Portátil' : 'Download Portable'}
+                </button>
               </div>
             </div>
 
-            {/* Option 2: Complete ZIP Package */}
+            {/* Option 3: Complete ZIP Package */}
             <div className="p-5 rounded-xl bg-slate-800/80 border border-slate-700 hover:border-slate-600 transition-all flex flex-col justify-between">
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-lg bg-emerald-600/20 text-emerald-400">
+                  <div className="p-2.5 rounded-lg bg-purple-600/20 text-purple-400">
                     <HardDrive className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-white text-base">Paquete Completo Windows (.ZIP)</h3>
-                    <p className="text-xs text-emerald-300 font-mono">TransMac_Windows11_Desktop.zip (45 KB)</p>
+                    <h3 className="font-bold text-white text-base">Paquete ZIP Completo</h3>
+                    <p className="text-xs text-purple-300 font-mono">TransMac_Desktop.zip</p>
                   </div>
                 </div>
                 <p className="text-xs text-slate-300 leading-relaxed">
                   {lang === 'es'
-                    ? 'Contiene el script nativo de PowerShell (TransMac_GUI.ps1), el lanzador con elevación de permisos (TransMac_Win11.bat) y la guía detallada de instrucciones (LEEME_INSTRUCCIONES.txt).'
-                    : 'Contains the complete suite: PowerShell GUI, Administrator batch launcher, and instructions.'}
+                    ? 'Incluye todos los archivos: VBScript silencioso, script de PowerShell y lanzador de emergencia.'
+                    : 'Includes all sources: VBScript, PowerShell, and batch files.'}
                 </p>
-                <div className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-700 text-[11px] space-y-1 font-mono text-slate-300">
-                  <div className="flex items-center gap-2">
-                    <FileCode className="w-3.5 h-3.5 text-blue-400" />
-                    <span>TransMac_GUI.ps1 (Interfaz Windows Forms)</span>
+                <div className="p-2 rounded-lg bg-slate-900/80 border border-slate-700 text-[10px] space-y-1 font-mono text-slate-300">
+                  <div className="flex items-center gap-1.5">
+                    <FileCode className="w-3 h-3 text-blue-400 shrink-0" />
+                    <span className="truncate">Ejecutar_TransMac.vbs (ANSI)</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Terminal className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>TransMac_Win11.bat (Lanzador con Elevación)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Info className="w-3.5 h-3.5 text-amber-400" />
-                    <span>LEEME_INSTRUCCIONES.txt (Manual en Español)</span>
+                  <div className="flex items-center gap-1.5">
+                    <Terminal className="w-3 h-3 text-emerald-400 shrink-0" />
+                    <span className="truncate">DESBLOQUEAR_Y_EJECUTAR.bat</span>
                   </div>
                 </div>
               </div>
 
               <div className="mt-5 pt-4 border-t border-slate-700/60">
-                <a
-                  href="/downloads/TransMac_Windows11_Desktop.zip"
-                  download="TransMac_Windows11_Desktop.zip"
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = `/downloads/TransMac_Windows11_Desktop.zip?t=${Date.now()}`;
+                    fetch(url)
+                      .then(res => res.blob())
+                      .then(blob => {
+                        const blobUrl = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = blobUrl;
+                        a.download = 'TransMac_Windows11_Desktop.zip';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(blobUrl);
+                      })
+                      .catch(() => { window.location.href = url; });
+                  }}
                   className="w-full py-2.5 px-4 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
-                  {lang === 'es' ? 'Descargar Paquete ZIP Completo' : 'Download Full ZIP Package'}
-                </a>
+                  {lang === 'es' ? 'Descargar ZIP Completo' : 'Download ZIP Package'}
+                </button>
               </div>
+            </div>
+          </div>
+
+          {/* SmartScreen & Security Warning Helper */}
+          <div className="p-4 rounded-xl bg-gradient-to-r from-red-950/50 via-amber-950/40 to-slate-900 border border-amber-500/50 space-y-3">
+            <div className="flex items-center gap-2 text-amber-300 font-bold text-xs uppercase tracking-wider">
+              <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px]">
+                SOLUCIÓN IMPORTANTE
+              </span>
+              <span>{lang === 'es' ? 'Si Windows 11 o el navegador bloquean el archivo al descargar:' : 'If Windows 11 or browser blocks the file:'}</span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-slate-200">
+              <div className="p-3 rounded-lg bg-slate-900/90 border border-slate-800 space-y-1.5">
+                <p className="font-bold text-amber-300 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                  {lang === 'es' ? '1. Si dice "Windows protegió su PC" (SmartScreen):' : '1. If Windows SmartScreen appears:'}
+                </p>
+                <ol className="list-decimal list-inside text-slate-300 space-y-1 text-[11px]">
+                  <li>Haz clic en el enlace azul <strong className="text-white font-semibold">"Más información"</strong>.</li>
+                  <li>Pulsa el botón <strong className="text-emerald-400 font-semibold">"Ejecutar de todos modos"</strong> que aparecerá en la parte inferior.</li>
+                  <li>Acepta el permiso de Administrador de Windows.</li>
+                </ol>
+              </div>
+
+              <div className="p-3 rounded-lg bg-slate-900/90 border border-slate-800 space-y-1.5">
+                <p className="font-bold text-blue-300 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-blue-400" />
+                  {lang === 'es' ? '2. Si el navegador (Chrome/Edge) muestra aviso:' : '2. If browser shows a download warning:'}
+                </p>
+                <ol className="list-decimal list-inside text-slate-300 space-y-1 text-[11px]">
+                  <li>En la barra de descargas, haz clic en los 3 puntos <strong className="text-white">⋮</strong> o la flecha.</li>
+                  <li>Selecciona <strong className="text-blue-300">"Guardar de todos modos"</strong> (o "Keep").</li>
+                  <li>O bien descarga el archivo <strong className="text-emerald-300">"DESBLOQUEAR_Y_EJECUTAR.bat"</strong> dentro del ZIP.</li>
+                </ol>
+              </div>
+            </div>
+
+            {/* Copy Unblock Command */}
+            <div className="pt-2 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
+              <span className="text-slate-400 text-[11px]">
+                {lang === 'es'
+                  ? '¿Prefieres desbloquearlo por comandos? Abre PowerShell y pega esto:'
+                  : 'Or unblock via PowerShell command:'}
+              </span>
+              <button
+                onClick={() => handleCopyCmd('Unblock-File -Path "$env:USERPROFILE\\Downloads\\TransMac_Portatil.bat"', 'ps-cmd')}
+                className="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-blue-300 border border-blue-500/30 text-[11px] font-mono flex items-center gap-1.5 cursor-pointer shrink-0 transition-all"
+              >
+                <Terminal className="w-3.5 h-3.5 text-blue-400" />
+                <span>{copiedFile === 'ps-cmd' ? '¡Comando Copiado!' : 'Copiar Comando Unblock-File'}</span>
+              </button>
             </div>
           </div>
 
